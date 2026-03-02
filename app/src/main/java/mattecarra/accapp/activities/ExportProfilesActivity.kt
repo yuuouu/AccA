@@ -37,7 +37,7 @@ class ExportProfilesActivity: AppCompatActivity() {
         var layoutManager = LinearLayoutManager(this)
 
         // Read from intent and deserialise
-        mEntries = intent.getSerializableExtra("list") as ArrayList<ProfileEntry>
+        mEntries = intent.getSerializableExtra("list") as? ArrayList<ProfileEntry> ?: arrayListOf()
 
         exportRecycler.layoutManager = layoutManager
         exportRecycler.adapter = mAdapter

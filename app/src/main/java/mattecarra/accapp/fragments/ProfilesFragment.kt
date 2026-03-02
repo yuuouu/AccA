@@ -66,14 +66,16 @@ class ProfilesFragment : ScopedFragment(),
 
         if (requestCode == 7 && resultCode == Activity.RESULT_OK && data?.getBooleanExtra(Constants.ACC_HAS_CHANGES, false) == true)
         {
-            launch {
-
-                val uid = data.getIntExtra(Constants.PROFILE_ID_KEY, -1) as Int
-                val newConfig = data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as AccConfig
-                val newProfile = data.getSerializableExtra(Constants.PROFILE_CONFIG_KEY) as AccaProfile
-
-                mProfilesViewModel.updateProfile(newProfile)
-                Toast.makeText(mContext, mContext.getString(R.string.profile_tile_label, newProfile.profileName) + '\n' + mContext.getString(R.string.update_completed), Toast.LENGTH_SHORT).show()
+            val newProfile = data.getSerializableExtra(Constants.PROFILE_CONFIG_KEY) as? AccaProfile
+            if (newProfile != null) {
+                launch {
+                    mProfilesViewModel.updateProfile(newProfile)
+                    Toast.makeText(
+                        mContext,
+                        mContext.getString(R.string.profile_tile_label, newProfile.profileName) + '\n' + mContext.getString(R.string.update_completed),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }
