@@ -560,11 +560,13 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
             ACC_CONFIG_EDITOR_REQUEST -> {
                 if (resultCode == Activity.RESULT_OK) {
                     if (data?.getBooleanExtra(Constants.ACC_HAS_CHANGES, false) == true) {
-                        launch {
-                            _sharedViewModel.updateAccConfig(data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as AccConfig) //TODO: Check assertion
+                        (data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as? AccConfig)?.let { config ->
+                            launch {
+                                _sharedViewModel.updateAccConfig(config)
 
-                            // Remove the current selected profile
-                            _sharedViewModel.clearCurrentSelectedProfile()
+                                // Remove the current selected profile
+                                _sharedViewModel.clearCurrentSelectedProfile()
+                            }
                         }
                     }
                 }
@@ -572,9 +574,9 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
 
             ACC_PROFILE_CREATOR_REQUEST -> {
                 if (resultCode == Activity.RESULT_OK) {
-                    if (data != null) {
-                        val accConfig: AccConfig =
-                            data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as AccConfig //TODO: Check assertion
+                    val accConfig: AccConfig? =
+                        data?.getSerializableExtra(Constants.ACC_CONFIG_KEY) as? AccConfig
+                    if (accConfig != null) {
                         val profileNameRegex = """^[^\\/:*?"<>|]+${'$'}""".toRegex()
                         MaterialDialog(this)
                             .show {
@@ -611,7 +613,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                     {
 
                         val accConfig: AccConfig =
-                            data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as AccConfig
+                            data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as? AccConfig ?: return
                         val editorData = data.getBundleExtra(Constants.DATA_KEY) ?: return
                         val profileId = editorData.getInt(Constants.PROFILE_ID_KEY)
 
@@ -636,6 +638,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                 dataBundle.getBoolean(Constants.SCHEDULE_EXEC_ONCE_KEY)
                             val executeOnBoot =
                                 dataBundle.getBoolean(Constants.SCHEDULE_EXEC_ONBOOT_KEY)
+                            val accConfig = data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as? AccConfig ?: return
 
                             _schedulesViewModel
                                 .addSchedule(
@@ -643,8 +646,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                     time,
                                     executeOnce,
                                     executeOnBoot,
-                                    data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as AccConfig
-                                        ?: return
+                                    accConfig
                                 )
                         }
                     }
@@ -663,6 +665,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                             val executeOnBoot =
                                 dataBundle.getBoolean(Constants.SCHEDULE_EXEC_ONBOOT_KEY)
                             val enabled = dataBundle.getBoolean(Constants.SCHEDULE_ENABLED_KEY)
+                            val accConfig = data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as? AccConfig ?: return
 
                             _schedulesViewModel
                                 .editSchedule(
@@ -672,8 +675,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                     time,
                                     executeOnce,
                                     executeOnBoot,
-                                    data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as AccConfig
-                                        ?: return
+                                    accConfig
                                 )
                         }
                     }
@@ -683,7 +685,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                 if (resultCode == Activity.RESULT_OK) {
                     // todo: read seralized profiles here to import via ViewModel
                     val imports =
-                        data?.getSerializableExtra(Constants.DATA_KEY) as List<ProfileEntry>
+                        data?.getSerializableExtra(Constants.DATA_KEY) as? List<ProfileEntry>
                     if (!imports.isNullOrEmpty()) {
                         for (entry: ProfileEntry in imports) {
                             _profilesViewModel.insertProfile(

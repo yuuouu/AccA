@@ -88,25 +88,24 @@ class AccConfigEditorActivity : ScopedAppActivity(),
         val profile = when // load profile from intent
         {
             savedInstanceState?.containsKey(Constants.PROFILE_CONFIG_KEY) == true ->
-                savedInstanceState.getSerializable(Constants.PROFILE_CONFIG_KEY) as AccaProfile
+                savedInstanceState.getSerializable(Constants.PROFILE_CONFIG_KEY) as? AccaProfile
 
             intent.hasExtra(Constants.PROFILE_CONFIG_KEY) ->
-                intent.getSerializableExtra(Constants.PROFILE_CONFIG_KEY) as AccaProfile
+                intent.getSerializableExtra(Constants.PROFILE_CONFIG_KEY) as? AccaProfile
 
-            else ->
-            {
-                accConfigOnly = true
-                AccaProfile(-1,"", AccConfig(), ProfileEnables())
-            }
+            else -> null
+        } ?: run {
+            accConfigOnly = true
+            AccaProfile(-1, "", AccConfig(), ProfileEnables())
         }
 
         val config = when // load config from intent or current config
         {
             savedInstanceState?.containsKey(Constants.ACC_CONFIG_KEY) == true ->
-                savedInstanceState.getSerializable(Constants.ACC_CONFIG_KEY) as AccConfig
+                savedInstanceState.getSerializable(Constants.ACC_CONFIG_KEY) as? AccConfig
 
             intent.hasExtra(Constants.ACC_CONFIG_KEY) ->
-                intent.getSerializableExtra(Constants.ACC_CONFIG_KEY) as AccConfig
+                intent.getSerializableExtra(Constants.ACC_CONFIG_KEY) as? AccConfig
 
             else -> try
             {

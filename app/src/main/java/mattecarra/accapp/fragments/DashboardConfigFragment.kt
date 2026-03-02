@@ -44,12 +44,14 @@ class DashboardConfigFragment() : ScopedFragment(), SharedPreferences.OnSharedPr
         {
             LogExt().d(javaClass.simpleName,"onActivityResult(): ACC_HAS_CHANGES=true")
 
-            launch {
-                mSharedViewModel.updateAccConfig(data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as AccConfig) //TODO: Check assertion
-                // Remove the current selected profile
-                mSharedViewModel.clearCurrentSelectedProfile()
+            (data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as? AccConfig)?.let { config ->
+                launch {
+                    mSharedViewModel.updateAccConfig(config)
+                    // Remove the current selected profile
+                    mSharedViewModel.clearCurrentSelectedProfile()
 
-                updateInfo(getString(R.string.profile_not_selected), data.getSerializableExtra(Constants.ACC_CONFIG_KEY) as AccConfig)
+                    updateInfo(getString(R.string.profile_not_selected), config)
+                }
             }
         }
     }
