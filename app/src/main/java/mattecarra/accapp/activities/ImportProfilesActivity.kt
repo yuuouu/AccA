@@ -10,7 +10,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
@@ -18,15 +17,19 @@ import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mattecarra.accapp.R
 import mattecarra.accapp.adapters.ProfileEntriesAdapter
 import mattecarra.accapp.databinding.ActivityImportBinding
 import mattecarra.accapp.models.ProfileEntry
 import mattecarra.accapp.utils.Constants
 import mattecarra.accapp.utils.LogExt
+import mattecarra.accapp.utils.ScopedAppActivity
 import java.io.Serializable
 
-class ImportProfilesActivity : AppCompatActivity() {
+class ImportProfilesActivity : ScopedAppActivity() {
     private lateinit var binding : ActivityImportBinding
     private lateinit var mAdapter: ProfileEntriesAdapter
 
@@ -77,25 +80,33 @@ class ImportProfilesActivity : AppCompatActivity() {
         if (clipboard.hasPrimaryClip() && clipboard.primaryClipDescription!!.hasMimeType(MIMETYPE_TEXT_PLAIN)) {
             pasteData = clipboard.primaryClip?.getItemAt(0)?.text.toString()
 
-            val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
-            val listType = Types.newParameterizedType(List::class.java, ProfileEntry::class.java)
-            // todo: put spinner while this works, put into coroutine, this can take a while for some reason (debugging overhead?)
-            val jsonAdapter: JsonAdapter<List<ProfileEntry>> = moshi.adapter(listType)
+            binding.importProgressBar.visibility = View.VISIBLE
+            binding.importProfileEmptyTv.visibility = View.GONE
 
-            try {
-                val result = jsonAdapter.fromJson(pasteData) as List<ProfileEntry>
+            launch {
+                try {
+                    val result = withContext(Dispatchers.IO) {
+                        val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
+                        val listType = Types.newParameterizedType(List::class.java, ProfileEntry::class.java)
+                        val jsonAdapter: JsonAdapter<List<ProfileEntry>> = moshi.adapter(listType)
+                        jsonAdapter.fromJson(pasteData) as List<ProfileEntry>
+                    }
 
-                for (entry: ProfileEntry in result) {
-                    mAdapter.addEntry(entry)
+                    for (entry: ProfileEntry in result) {
+                        mAdapter.addEntry(entry)
+                    }
+
+                    if (mAdapter.itemCount > 0) {
+                        // Show recyclerview & hide label
+                        binding.importProfilesRv.visibility = View.VISIBLE
+                        binding.importProfileEmptyTv.visibility = View.GONE
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(this@ImportProfilesActivity, getString(R.string.import_toast_no_valid_profile_json_clipboard), Toast.LENGTH_LONG).show()
+                    binding.importProfileEmptyTv.visibility = View.VISIBLE
+                } finally {
+                    binding.importProgressBar.visibility = View.GONE
                 }
-
-                if (mAdapter.itemCount > 0) {
-                    // Show recyclerview & hide label
-                    binding.importProfilesRv.visibility = View.VISIBLE
-                    binding.importProfileEmptyTv.visibility = View.GONE
-                }
-            } catch (e: Exception) {
-                Toast.makeText(this, getString(R.string.import_toast_no_valid_profile_json_clipboard), Toast.LENGTH_LONG).show()
             }
         } else {
             Toast.makeText(this, getString(R.string.import_toast_no_valid_profile_json_clipboard), Toast.LENGTH_LONG).show()
