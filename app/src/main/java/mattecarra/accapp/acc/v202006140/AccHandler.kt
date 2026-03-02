@@ -274,7 +274,7 @@ open class AccHandler(override val version: Int) : AccInterface {
         val res = Shell.su("/dev/acca -s s:").exec()
 
         if(res.isSuccess)
-            res.out.map { it.trim() }.filter { it.isNotEmpty() }
+            res.out.asSequence().map { it.trim() }.filter { it.isNotEmpty() }.toList()
         else
             emptyList()
     }
