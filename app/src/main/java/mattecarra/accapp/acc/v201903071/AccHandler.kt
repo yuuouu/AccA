@@ -3,6 +3,7 @@ package mattecarra.accapp.acc.v201903071
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import mattecarra.accapp.utils.ShellUtils
 
 class AccHandler(override val version: Int) : mattecarra.accapp.acc.legacy.AccHandler(version) {
     override suspend fun listChargingSwitches(): List<String> = withContext(Dispatchers.IO) {
@@ -23,5 +24,5 @@ class AccHandler(override val version: Int) : mattecarra.accapp.acc.legacy.AccHa
         if (switch.isNullOrBlank())
             "acc -s s-"
         else
-            "acc -s s $switch"
+            "acc -s s ${ShellUtils.escape(switch)}"
 }

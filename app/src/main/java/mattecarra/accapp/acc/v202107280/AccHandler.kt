@@ -10,6 +10,7 @@ import mattecarra.accapp.acc.ConfigUpdaterEnable
 import mattecarra.accapp.acc._interface.AccInterface
 import mattecarra.accapp.models.AccConfig
 import mattecarra.accapp.models.BatteryInfo
+import mattecarra.accapp.utils.ShellUtils
 import java.io.IOException
 import java.util.regex.Pattern
 
@@ -283,7 +284,7 @@ open class AccHandler(override val version: Int) : AccInterface {
     }
 
     override suspend fun testChargingSwitch(chargingSwitch: String?): Int = withContext(Dispatchers.IO) {
-        Shell.su("/dev/.vr25/acc/acca -t${chargingSwitch?.let{" $it"} ?: ""}").exec().code
+        Shell.su("/dev/.vr25/acc/acca -t${chargingSwitch?.let{" " + ShellUtils.escape(it)} ?: ""}").exec().code
     }
 
     override fun getCurrentChargingSwitch(config: String): String? {
@@ -339,20 +340,20 @@ open class AccHandler(override val version: Int) : AccInterface {
 
     override fun getUpdateAccOnBootExitCommand(enabled: Boolean): String = "" //Not supported
 
-    override fun getUpdateAccOnBootCommand(command: String?): String = "/dev/.vr25/acc/acca -s \"apply_on_boot=${command.orEmpty()}\""
+    override fun getUpdateAccOnBootCommand(command: String?): String = "/dev/.vr25/acc/acca -s apply_on_boot=${ShellUtils.escape(command.orEmpty())}"
 
 
-    override fun getUpdateAccOnPluggedCommand(command: String?) : String = "/dev/.vr25/acc/acca -s \"apply_on_plug=${command.orEmpty()}\""
+    override fun getUpdateAccOnPluggedCommand(command: String?) : String = "/dev/.vr25/acc/acca -s apply_on_plug=${ShellUtils.escape(command.orEmpty())}"
 
     override fun getUpdateAccChargingSwitchCommand(switch: String?, automaticSwitchingEnabled: Boolean) : String {
         return if(switch != null) {
-            "/dev/.vr25/acc/acca -s \"charging_switch=${switch}${if (automaticSwitchingEnabled) "" else " --"}\""
+            "/dev/.vr25/acc/acca -s charging_switch=${ShellUtils.escape(switch + if (automaticSwitchingEnabled) "" else " --")}"
         } else {
-            "/dev/.vr25/acc/acca -s \"charging_switch=\""
+            "/dev/.vr25/acc/acca -s charging_switch=\"\""
         }
     }
 
-    override fun getUpgradeCommand(version: String) = "/dev/.vr25/acc/acca --upgrade $version"
+    override fun getUpgradeCommand(version: String) = "/dev/.vr25/acc/acca --upgrade ${ShellUtils.escape(version)}"
 
     override fun getUpdatePrioritizeBatteryIdleModeCommand(enabled: Boolean): String = "/dev/.vr25/acc/acca --set prioritize_batt_idle_mode=$enabled"
 
