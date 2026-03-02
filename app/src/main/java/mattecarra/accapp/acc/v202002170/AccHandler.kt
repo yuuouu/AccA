@@ -10,6 +10,7 @@ import mattecarra.accapp.acc.ConfigUpdaterEnable
 import mattecarra.accapp.acc._interface.AccInterface
 import mattecarra.accapp.models.AccConfig
 import mattecarra.accapp.models.BatteryInfo
+import mattecarra.accapp.utils.ShellUtils
 import java.io.IOException
 import java.util.regex.Pattern
 
@@ -287,7 +288,7 @@ open class AccHandler(override val version: Int) : AccInterface {
     }
 
     override suspend fun testChargingSwitch(chargingSwitch: String?): Int = withContext(Dispatchers.IO) {
-        Shell.su(".acc-en -t${chargingSwitch?.let{" $it"} ?: ""}").exec().code
+        Shell.su(".acc-en -t${chargingSwitch?.let{" " + ShellUtils.escape(it)} ?: ""}").exec().code
     }
 
     override fun getCurrentChargingSwitch(config: String): String? {
@@ -343,14 +344,14 @@ open class AccHandler(override val version: Int) : AccInterface {
 
     override fun getUpdateAccOnBootExitCommand(enabled: Boolean): String = "" //Not supported
 
-    override fun getUpdateAccOnBootCommand(command: String?): String = ".acc-en -s \"apply_on_boot=${command.orEmpty()}\""
+    override fun getUpdateAccOnBootCommand(command: String?): String = ".acc-en -s apply_on_boot=${ShellUtils.escape(command.orEmpty())}"
 
 
-    override fun getUpdateAccOnPluggedCommand(command: String?) : String = ".acc-en -s \"apply_on_plug=${command.orEmpty()}\""
+    override fun getUpdateAccOnPluggedCommand(command: String?) : String = ".acc-en -s apply_on_plug=${ShellUtils.escape(command.orEmpty())}"
 
-    override fun getUpdateAccChargingSwitchCommand(switch: String?, automaticSwitchingEnabled: Boolean) : String = ".acc-en -s \"charging_switch=${switch.orEmpty()}\""
+    override fun getUpdateAccChargingSwitchCommand(switch: String?, automaticSwitchingEnabled: Boolean) : String = ".acc-en -s charging_switch=${ShellUtils.escape(switch.orEmpty())}"
 
-    override fun getUpgradeCommand(version: String) = ".acc-en --upgrade $version"
+    override fun getUpgradeCommand(version: String) = ".acc-en --upgrade ${ShellUtils.escape(version)}"
 
     override fun getUpdatePrioritizeBatteryIdleModeCommand(enabled: Boolean): String = ".acc-en --set prioritize_batt_idle_mode=$enabled"
 

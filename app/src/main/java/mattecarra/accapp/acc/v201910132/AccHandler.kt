@@ -9,6 +9,7 @@ import mattecarra.accapp.acc.ConfigUpdater
 import mattecarra.accapp.acc.ConfigUpdaterEnable
 import mattecarra.accapp.acc._interface.AccInterface
 import mattecarra.accapp.models.*
+import mattecarra.accapp.utils.ShellUtils
 import java.io.IOException
 import java.util.regex.Pattern
 
@@ -263,7 +264,7 @@ open class AccHandler(override val version: Int) : AccInterface {
     }
 
     override suspend fun testChargingSwitch(chargingSwitch: String?): Int = withContext(Dispatchers.IO) {
-        Shell.su("acc-en -t${chargingSwitch?.let{" $it"} ?: ""}").exec().code
+        Shell.su("acc-en -t${chargingSwitch?.let{" " + ShellUtils.escape(it)} ?: ""}").exec().code
     }
 
     override fun getCurrentChargingSwitch(config: String): String? {
@@ -330,20 +331,20 @@ open class AccHandler(override val version: Int) : AccInterface {
 
     override fun getUpdateAccOnBootExitCommand(enabled: Boolean): String = "acc-en -s onBootExit $enabled"
 
-    override fun getUpdateAccOnBootCommand(command: String?): String = "acc-en -s applyOnBoot${command?.let{ " $it" } ?: ""}"
+    override fun getUpdateAccOnBootCommand(command: String?): String = "acc-en -s applyOnBoot${command?.let{ " ${ShellUtils.escape(it)}" } ?: ""}"
 
 
-    override fun getUpdateAccOnPluggedCommand(command: String?) : String = "acc-en -s applyOnPlug${command?.let{ " $it" } ?: ""}"
+    override fun getUpdateAccOnPluggedCommand(command: String?) : String = "acc-en -s applyOnPlug${command?.let{ " ${ShellUtils.escape(it)}" } ?: ""}"
 
     override fun getUpdateAccChargingSwitchCommand(switch: String?, automaticSwitchingEnabled: Boolean) : String =
         if (switch.isNullOrBlank())
             "acc-en -s s-"
         else
-            "acc-en -s s $switch"
+            "acc-en -s s ${ShellUtils.escape(switch)}"
 
-    override fun getUpgradeCommand(version: String) = "acc-en --upgrade $version"
+    override fun getUpgradeCommand(version: String) = "acc-en --upgrade ${ShellUtils.escape(version)}"
 
     override fun getUpdatePrioritizeBatteryIdleModeCommand(enabled: Boolean): String = "acc-en --set prioritizeBattIdleMode $enabled"
 
-    override fun getAddChargingSwitchCommand(switch: String): String = "acc --set chargingSwitch $switch"
+    override fun getAddChargingSwitchCommand(switch: String): String = "acc --set chargingSwitch ${ShellUtils.escape(switch)}"
 }
