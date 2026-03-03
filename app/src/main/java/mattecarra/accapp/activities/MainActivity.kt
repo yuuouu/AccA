@@ -700,7 +700,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                     }
                     Toast.makeText(
                         this,
-                        getString(R.string.import_profile_success, imports.size),
+                        getString(R.string.import_profile_success, imports?.size ?: 0),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
