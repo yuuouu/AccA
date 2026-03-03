@@ -119,7 +119,7 @@ class AccConfigEditorActivity : ScopedAppActivity(),
             }
         }
 
-        if (accConfigOnly) profile.accConfig = config
+        if (accConfigOnly && config != null) profile.accConfig = config
         initConfig = profile.accConfig.copy()
 
         viewModel = ViewModelProvider(this, AccConfigEditorViewModelFactory(application, profile))
