@@ -157,7 +157,7 @@ open class AccHandler(override val version: Int) : AccInterface {
     // Regex for determining CHARGE_TYPE
     private val CHARGE_TYPE_REGEXP = """^\s*CHARGE_TYPE=(N/A|[a-zA-Z]+)""".toRegex(RegexOption.MULTILINE)
     // Regex for battery CAPACITY
-    private val CAPACTIY_REGEXP = """^\s*CAPACITY=(\d+)""".toRegex(RegexOption.MULTILINE)
+    private val CAPACTIY_REGEXP = """(?i)(?:capacity|level)[\s=:]*(\d+)""".toRegex(RegexOption.MULTILINE)
     // Regex for CHARGER_TEMP
     private val CHARGER_TEMP_REGEXP = """^\s*CHARGER_TEMP=(\d+)""".toRegex(RegexOption.MULTILINE)
     // Regex for CHARGER_TEMP_MAX
