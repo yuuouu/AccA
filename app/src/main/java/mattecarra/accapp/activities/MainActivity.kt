@@ -373,7 +373,6 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                     }
                 } else {
                     ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
-                    checkWritePermission(this@MainActivity)
                     initUi()
                 }
 
@@ -387,7 +386,6 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                     checkUpdates(version)
                 } else {
                     ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
-                    checkWritePermission(this@MainActivity)
                     initUi()
                 }
             }
@@ -427,7 +425,6 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                         Toast.LENGTH_LONG
                                     ).show()
                                     ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
-                                    checkWritePermission(this@MainActivity)
                                     initUi()
                                 }
 
@@ -438,7 +435,6 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                         Toast.LENGTH_LONG
                                     ).show()
                                     ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
-                                    checkWritePermission(this@MainActivity)
                                     initUi()
                                 }
 
@@ -448,9 +444,9 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                             title(R.string.acc_installation_failed_title)
                                             message(R.string.acc_installation_failed)
                                             positiveButton(android.R.string.ok) {
+                                            positiveButton(android.R.string.ok) {
                                                 launch {
                                                     ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
-                                                    checkWritePermission(this@MainActivity)
                                                     initUi()
                                                 }
                                             }
@@ -467,7 +463,6 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                     negativeButton(android.R.string.no) {
                         launch {
                             ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
-                            checkWritePermission(this@MainActivity)
                             initUi()
                         }
                     }
@@ -475,7 +470,6 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                 }
             } else {
                 ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
-                checkWritePermission(this@MainActivity)
                 initUi()
             }
         }
@@ -540,12 +534,6 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
     }
 
 
-    fun checkWritePermission(context: Context)
-    {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-            if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE))
-                ActivityCompat.requestPermissions(this, Array(1){ Manifest.permission.WRITE_EXTERNAL_STORAGE }, 1);
-    }
 
     /**
      * Function for setting the app's theme depending on saved preference.
