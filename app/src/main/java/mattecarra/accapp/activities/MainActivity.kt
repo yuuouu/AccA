@@ -133,11 +133,11 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                 return true
             }
             R.id.botNav_schedules -> {
-                return if (!Djs.isDjsInstalled(filesDir)) {
+                return if (!kotlinx.coroutines.runBlocking { Djs.isDjsInstalled(filesDir) }) {
                     djsInstallationDialog()
                     false
                 } else {
-                    if (!Djs.initDjs(filesDir) || Djs.isInstalledDjsOutdated())
+                    if (!kotlinx.coroutines.runBlocking { Djs.initDjs(filesDir) } || Djs.isInstalledDjsOutdated())
                     {
                         installDjs()
                         false
@@ -272,7 +272,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
     private fun checkAccInstalled(): Boolean {
         val version = _preferences.accVersion
 
-        if (!Acc.isAccInstalled(filesDir) || (version == "bundled" && Acc.isInstalledAccOutdated()))
+        if (!kotlinx.coroutines.runBlocking { Acc.isAccInstalled(filesDir) } || (version == "bundled" && Acc.isInstalledAccOutdated()))
         {
             val dialog = MaterialDialog(this).show {
                 title(R.string.installing_acc)

@@ -141,7 +141,7 @@ class Preferences(private val context: Context)
         }
 
     var djsEnabled: Boolean
-        get() = sharedPrefs.getBoolean(DJS_ENABLED, false) && Djs.isDjsInstalled(context.filesDir)
+        get() = sharedPrefs.getBoolean(DJS_ENABLED, false)
         set(value) {
             val editor = sharedPrefs.edit()
             editor.putBoolean(DJS_ENABLED, value)

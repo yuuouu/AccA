@@ -10,7 +10,8 @@ import androidx.core.content.ContextCompat.getColor
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.observe
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collect
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
@@ -75,8 +76,10 @@ class DashboardFragment : ScopedFragment()
 
         //-----------------------------------------------------------------
 
-        mViewModel.getDashboardValues().observe(viewLifecycleOwner) { dash ->
-            // Set Status Card text
+        lifecycleScope.launchWhenStarted {
+            mViewModel.dashboardValues.collect { dash ->
+                if (dash == null) return@collect
+                // Set Status Card text
             dash.daemon?.let { daemon -> setAccdStatusUi(daemon) }
 
             // Battery/Charge details
@@ -91,6 +94,7 @@ class DashboardFragment : ScopedFragment()
             binding.dashBatteryTemperatureTextView.text = dash.batteryInfo.getTemperature(preferences.temperatureOutputUnitOfMeasure, true)
             binding.dashBatteryHealthTextView.text = dash.batteryInfo.health
             binding.dashBatteryVoltageTextView.text = dash.batteryInfo.getVoltageNow(preferences.voltageInputUnitOfMeasure, preferences.voltageOutputUnitOfMeasure, true)
+            }
         }
 
         activity?.let { it ->
@@ -150,7 +154,7 @@ class DashboardFragment : ScopedFragment()
                     }
                 }
 
-                mViewModel.getDashboardValues().observe(viewLifecycleOwner, observer)
+                val job2 = lifecycleScope.launchWhenStarted { mViewModel.dashboardValues.collect { d -> observer.onChanged(d) } }
 
                 withContext(Dispatchers.IO) {
                     if (stopDaemon) Acc.instance.abcStopDaemon()
@@ -159,7 +163,7 @@ class DashboardFragment : ScopedFragment()
 
                 delay(5000)
 
-                mViewModel.getDashboardValues().removeObserver(observer)
+                job2.cancel()
 
                 if (!finished.getAndSet(true))
                 {
@@ -190,10 +194,10 @@ class DashboardFragment : ScopedFragment()
             }
         }
 
-        mViewModel.getDashboardValues().observe(viewLifecycleOwner, Observer { d ->
-            toggleAccdStatusUi(d.daemon)
-            mIsDaemonRunning = d.daemon
-        })
+        lifecycleScope.launchWhenStarted { mViewModel.dashboardValues.collect { d ->
+            toggleAccdStatusUi(d?.daemon)
+            mIsDaemonRunning = d?.daemon
+        } }
     }
 
     private fun toggleAccdStatusUi(running: Boolean?)

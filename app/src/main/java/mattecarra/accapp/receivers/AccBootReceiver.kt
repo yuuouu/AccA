@@ -17,11 +17,11 @@ class AccBootReceiver: BroadcastReceiver() {
             if(Shell.rootAccess()) {
                 val preferences = Preferences(context)
 
-                val accInitResult = Acc.initAcc(context.filesDir)
+                val accInitResult = kotlinx.coroutines.runBlocking { Acc.initAcc(context.filesDir) }
                 Log.d(LOG_TAG, "Acc deamon init. Success=$accInitResult")
 
                 if(preferences.djsEnabled) {
-                    val djsInitResult = Djs.initDjs(context.filesDir)
+                    val djsInitResult = kotlinx.coroutines.runBlocking { Djs.initDjs(context.filesDir) }
                     Log.d(LOG_TAG, "DJS deamon init. Success=$djsInitResult")
                 }
             }
