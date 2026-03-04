@@ -52,7 +52,7 @@ object Acc {
 
             synchronized(this) {
                 // Create acc instance here
-                initAcc(File(FILES_DIR))
+                kotlinx.coroutines.runBlocking { initAcc(File(FILES_DIR)) }
                 return createAccInstance()
             }
         }
@@ -62,17 +62,17 @@ object Acc {
         return INSTANCE as AccInterface
     }
 
-    fun isAccInstalled(installationDir: File): Boolean {
-        return Shell.su("test -f ${File(installationDir, "acc/service.sh").absolutePath}").exec().isSuccess
+    suspend fun isAccInstalled(installationDir: File): Boolean {
+        return mattecarra.accapp.utils.ShellExecutor.execute("test -f ${File(installationDir, "acc/service.sh").absolutePath}").isSuccess
     }
 
     fun isInstalledAccOutdated(): Boolean = runBlocking {
         instance.getAccVersion()?.let { it < bundledVersion } ?: true
     }
 
-    fun initAcc(installationDir: File): Boolean {
+    suspend fun initAcc(installationDir: File): Boolean {
         return if(isAccInstalled(installationDir))
-            Shell.su("[ -f /dev/.vr25/acc/acca ] || ${File(installationDir, "acc/service.sh").absolutePath}").exec().isSuccess
+            mattecarra.accapp.utils.ShellExecutor.execute("[ -f /dev/.vr25/acc/acca ] || ${File(installationDir, "acc/service.sh").absolutePath}").isSuccess
         else
             false
     }

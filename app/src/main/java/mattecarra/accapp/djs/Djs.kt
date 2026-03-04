@@ -85,13 +85,13 @@ object Djs {
         return INSTANCE as DjsInterface
     }
 
-    fun isDjsInstalled(installationDir: File): Boolean {
-        return Shell.su("test -f ${File(installationDir, "djs/service.sh").absolutePath}").exec().isSuccess
+    suspend fun isDjsInstalled(installationDir: File): Boolean {
+        return mattecarra.accapp.utils.ShellExecutor.execute("test -f ${File(installationDir, "djs/service.sh").absolutePath}").isSuccess
     }
 
-    fun initDjs(installationDir: File): Boolean {
+    suspend fun initDjs(installationDir: File): Boolean {
         return if(isDjsInstalled(installationDir))
-            Shell.su("[ -f /dev/.vr25/djs/djsc ] || ${File(installationDir, "djs/service.sh").absolutePath}").exec().isSuccess
+            mattecarra.accapp.utils.ShellExecutor.execute("[ -f /dev/.vr25/djs/djsc ] || ${File(installationDir, "djs/service.sh").absolutePath}").isSuccess
         else
             false
     }

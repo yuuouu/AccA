@@ -151,8 +151,8 @@ class SettingsFragment : PreferenceFragmentCompat(), CoroutineScope {
         djsEnable?.setOnPreferenceChangeListener { _, isEnabled ->
             context?.let { context ->
                 when {
-                    isEnabled as Boolean && Djs.isDjsInstalled(context.filesDir) -> {
-                        Djs.initDjs(context.filesDir)
+                    isEnabled as Boolean && kotlinx.coroutines.runBlocking { Djs.isDjsInstalled(context.filesDir) } -> {
+                        kotlinx.coroutines.runBlocking { Djs.initDjs(context.filesDir) }
                         true
                     }
 

@@ -1,36 +1,29 @@
 package mattecarra.accapp.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.*
-import kotlinx.coroutines.Dispatchers
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import mattecarra.accapp.Preferences
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import mattecarra.accapp.acc.Acc
-import mattecarra.accapp.models.BatteryInfo
-import mattecarra.accapp.R
 import mattecarra.accapp.models.DashboardValues
 
 class DashboardViewModel : ViewModel() {
-
-    private val dashboard: MutableLiveData<DashboardValues> = MutableLiveData()
-
-    fun getDashboardValues(): LiveData<DashboardValues> {
-        return dashboard
-    }
-
-    init {
-        viewModelScope.launch() {
-            while (true) {
-                if (dashboard.hasActiveObservers()) {
-                    dashboard.value = DashboardValues(
-                        Acc.instance.getBatteryInfo(),
-                        Acc.instance.isAccdRunning()
-                    )
-                }
-                delay(2000)
-            }
+    val dashboardValues: StateFlow<DashboardValues?> = flow {
+        while (true) {
+            emit(
+                DashboardValues(
+                    Acc.instance.getBatteryInfo(),
+                    Acc.instance.isAccdRunning()
+                )
+            )
+            delay(2000)
         }
-    }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5000L),
+        initialValue = null
+    )
 }
