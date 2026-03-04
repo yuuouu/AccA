@@ -444,6 +444,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                             title(R.string.acc_installation_failed_title)
                                             message(R.string.acc_installation_failed)
                                             positiveButton(android.R.string.ok) {
+                                            positiveButton(android.R.string.ok) {
                                                 launch {
                                                     ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
                                                     initUi()
