@@ -39,6 +39,13 @@ allprojects {
         maven { url 'https://jitpack.io' }
         maven { url 'https://maven.aliyun.com/repository/public' }
     }
+    configurations.all {
+        resolutionStrategy {
+            force "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin}"
+            force "org.jetbrains.kotlin:kotlin-stdlib-common:${versions.kotlin}"
+            force "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.coroutines}"
+        }
+    }
 }
 
 task clean(type: Delete) {
