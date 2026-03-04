@@ -372,6 +372,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                         false
                     }
                 } else {
+                    ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
                     checkWritePermission(this@MainActivity)
                     initUi()
                 }
@@ -385,6 +386,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                     _preferences.lastUpdateCheck = time
                     checkUpdates(version)
                 } else {
+                    ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
                     checkWritePermission(this@MainActivity)
                     initUi()
                 }
@@ -424,6 +426,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                         R.string.no_update_available,
                                         Toast.LENGTH_LONG
                                     ).show()
+                                    ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
                                     checkWritePermission(this@MainActivity)
                                     initUi()
                                 }
@@ -434,6 +437,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                         R.string.update_completed,
                                         Toast.LENGTH_LONG
                                     ).show()
+                                    ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
                                     checkWritePermission(this@MainActivity)
                                     initUi()
                                 }
@@ -444,8 +448,11 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                             title(R.string.acc_installation_failed_title)
                                             message(R.string.acc_installation_failed)
                                             positiveButton(android.R.string.ok) {
-                                                checkWritePermission(this@MainActivity)
-                                                initUi()
+                                                launch {
+                                                    ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
+                                                    checkWritePermission(this@MainActivity)
+                                                    initUi()
+                                                }
                                             }
                                             //TODO add logs
                                             //shareLogsNeutralButton(File(filesDir, "logs/acc-install.log"), R.string.acc_installation_failed_log)
@@ -458,11 +465,16 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
 
                     }
                     negativeButton(android.R.string.no) {
-                        checkWritePermission(this@MainActivity)
-                        initUi()
+                        launch {
+                            ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
+                            checkWritePermission(this@MainActivity)
+                            initUi()
+                        }
                     }
+                    cancelOnTouchOutside(false)
                 }
             } else {
+                ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
                 checkWritePermission(this@MainActivity)
                 initUi()
             }
