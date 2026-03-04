@@ -133,24 +133,25 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                 return true
             }
             R.id.botNav_schedules -> {
-                return if (!kotlinx.coroutines.runBlocking { Djs.isDjsInstalled(filesDir) }) {
-                    djsInstallationDialog()
-                    false
-                } else {
-                    if (!kotlinx.coroutines.runBlocking { Djs.initDjs(filesDir) } || Djs.isInstalledDjsOutdated())
-                    {
-                        installDjs()
-                        false
+                launch {
+                    if (!Djs.isDjsInstalled(filesDir)) {
+                        djsInstallationDialog()
                     } else {
-                        loadFragment(schedulesFragment)
-                        true
+                        if (!Djs.initDjs(filesDir) || Djs.isInstalledDjsOutdated())
+                        {
+                            installDjs()
+                        } else {
+                            loadFragment(schedulesFragment)
+                        }
                     }
                 }
+                return true
             }
         }
 
         return false
     }
+
 
     fun djsInstallationDialog()
     {
@@ -269,19 +270,19 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
         }
     }
 
-    private fun checkAccInstalled(): Boolean {
+    private fun checkAccInstalled() {
         val version = _preferences.accVersion
 
-        if (!kotlinx.coroutines.runBlocking { Acc.isAccInstalled(filesDir) } || (version == "bundled" && Acc.isInstalledAccOutdated()))
-        {
-            val dialog = MaterialDialog(this).show {
-                title(R.string.installing_acc)
-                progress(R.string.wait)
-                cancelOnTouchOutside(false)
-                onKeyCodeBackPressed { false }
-            }
+        launch {
+            if (!Acc.isAccInstalled(filesDir) || (version == "bundled" && Acc.isInstalledAccOutdated()))
+            {
+                val dialog = MaterialDialog(this@MainActivity).show {
+                    title(R.string.installing_acc)
+                    progress(R.string.wait)
+                    cancelOnTouchOutside(false)
+                    onKeyCodeBackPressed { false }
+                }
 
-            launch {
                 val res = when (version)
                 {
                     "bundled" -> Acc.installBundledAccModule(this@MainActivity)
@@ -300,9 +301,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                     message(R.string.installation_failed_non_bundled)
                                     positiveButton(R.string.install_bundled_version) {
                                         _preferences.accVersion = "bundled"
-                                        if (checkAccInstalled()) {
-                                            initUi()
-                                        }
+                                        checkAccInstalled()
                                     }
                                     negativeButton(R.string.select_different_version) {
                                         MaterialDialog(this@MainActivity) //select a different acc version dailog
@@ -313,10 +312,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                                 this@MainActivity.launch {
                                                     accVersionSingleChoice(_preferences.accVersion) { version ->
                                                         _preferences.accVersion = version
-
-                                                        if (checkAccInstalled()) {
-                                                            initUi()
-                                                        }
+                                                        checkAccInstalled()
                                                     }
                                                 }
                                                 onKeyCodeBackPressed {
@@ -342,9 +338,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                     title(R.string.installation_failed_busybox_title)
                                     message(R.string.installation_failed_busybox)
                                     positiveButton(R.string.retry) {
-                                        if (checkAccInstalled()) {
-                                            initUi()
-                                        }
+                                        checkAccInstalled()
                                     }
                                     negativeButton {
                                         finish()
@@ -358,8 +352,7 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                     title(R.string.acc_installation_failed_title)
                                     message(R.string.acc_installation_failed)
                                     positiveButton(R.string.retry) {
-                                        if (checkAccInstalled())
-                                            initUi()
+                                        checkAccInstalled()
                                     }
                                     negativeButton {
                                         finish()
@@ -379,24 +372,24 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                         false
                     }
                 } else {
+                    ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
                     initUi()
                 }
 
                 res?.let {
                     Log.d(LOG_TAG, it.out.joinToString("\n"))
                 }
+            } else {
+                val time = System.currentTimeMillis() / 1000
+                if ((version == "master" || version == "dev") && time - _preferences.lastUpdateCheck > 86400) {
+                    _preferences.lastUpdateCheck = time
+                    checkUpdates(version)
+                } else {
+                    ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
+                    initUi()
+                }
             }
-
-            return false
         }
-
-        val time = System.currentTimeMillis() / 1000
-        if ((version == "master" || version == "dev") && time - _preferences.lastUpdateCheck > 86400) {
-            _preferences.lastUpdateCheck = time
-            checkUpdates(version)
-        }
-
-        return true
     }
 
     /*
@@ -425,19 +418,25 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                             dialog.cancel()
 
                             when (res?.code) {
-                                6 ->
+                                6 -> {
                                     Toast.makeText(
                                         this@MainActivity,
                                         R.string.no_update_available,
                                         Toast.LENGTH_LONG
                                     ).show()
+                                    ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
+                                    initUi()
+                                }
 
-                                0 ->
+                                0 -> {
                                     Toast.makeText(
                                         this@MainActivity,
                                         R.string.update_completed,
                                         Toast.LENGTH_LONG
                                     ).show()
+                                    ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
+                                    initUi()
+                                }
 
                                 else -> {
                                     MaterialDialog(this@MainActivity) //Other installation errors can not be handled automatically -> show a dialog with the logs
@@ -445,7 +444,10 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                                             title(R.string.acc_installation_failed_title)
                                             message(R.string.acc_installation_failed)
                                             positiveButton(android.R.string.ok) {
-                                                initUi()
+                                                launch {
+                                                    ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
+                                                    initUi()
+                                                }
                                             }
                                             //TODO add logs
                                             //shareLogsNeutralButton(File(filesDir, "logs/acc-install.log"), R.string.acc_installation_failed_log)
@@ -457,8 +459,17 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                         }
 
                     }
-                    negativeButton(android.R.string.no)
+                    negativeButton(android.R.string.no) {
+                        launch {
+                            ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
+                            initUi()
+                        }
+                    }
+                    cancelOnTouchOutside(false)
                 }
+            } else {
+                ShellExecutor.execute("dumpsys deviceidle whitelist +$packageName")
+                initUi()
             }
         }
     }
@@ -515,19 +526,13 @@ class MainActivity : ScopedAppActivity(), BottomNavigationView.OnNavigationItemS
                 }
             }
         }
-        else if (checkAccInstalled())
+        else
         {
-            checkWritePermission(this)
-            initUi()
+            checkAccInstalled()
         }
     }
 
-    fun checkWritePermission(context: Context)
-    {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-            if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE))
-                ActivityCompat.requestPermissions(this, Array(1){ Manifest.permission.WRITE_EXTERNAL_STORAGE }, 1);
-    }
+
 
     /**
      * Function for setting the app's theme depending on saved preference.
