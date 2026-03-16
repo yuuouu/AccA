@@ -1,6 +1,7 @@
 package mattecarra.accapp.acc.v202107280
 
 import androidx.annotation.WorkerThread
+import android.util.Log
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -146,10 +147,10 @@ open class AccHandler(override val version: Int) : AccInterface {
     private val HEALTH_REGEXP = """^\s*HEALTH=([a-zA-Z]+)""".toRegex(RegexOption.MULTILINE)
     // Regex for PRESENT value
     private val PRESENT_REGEXP = """^\s*PRESENT=(\d+)""".toRegex(RegexOption.MULTILINE)
-    // Regex for determining CHARGE_TYPE
-    private val CHARGE_TYPE_REGEXP = """^\s*CHARGE_TYPE=(N/A|[a-zA-Z]+)""".toRegex(RegexOption.MULTILINE)
+    // Regex for determining CHARGE_TYPE or TYPE
+    private val CHARGE_TYPE_REGEXP = """^\s*(?:CHARGE_TYPE|TYPE)=(N/A|[a-zA-Z]+)""".toRegex(RegexOption.MULTILINE)
     // Regex for battery CAPACITY
-    private val CAPACTIY_REGEXP = """(?i)(?:capacity|level)[\s=:]*(\d+)""".toRegex(RegexOption.MULTILINE)
+    private val CAPACTIY_REGEXP = """^\s*CAPACITY=(\d+)""".toRegex(RegexOption.MULTILINE)
     // Regex for CHARGER_TEMP
     private val CHARGER_TEMP_REGEXP = """^\s*CHARGER_TEMP=(\d+)""".toRegex(RegexOption.MULTILINE)
     // Regex for CHARGER_TEMP_MAX
@@ -191,7 +192,10 @@ open class AccHandler(override val version: Int) : AccInterface {
 
     override suspend fun getBatteryInfo(): BatteryInfo = withContext(Dispatchers.IO) {
         val info =  Shell.su("/dev/.vr25/acc/acca -i").exec().out.joinToString(separator = "\n")
-
+        Log.e("AccA:AccHandler", "===== acca -i raw output =====\n$info")
+        Log.e("AccA:AccHandler", "CAPACITY match: ${CAPACTIY_REGEXP.find(info)?.destructured?.component1()}")
+        Log.e("AccA:AccHandler", "HEALTH match: ${HEALTH_REGEXP.find(info)?.destructured?.component1()}")
+        Log.e("AccA:AccHandler", "CHARGE_TYPE match: ${CHARGE_TYPE_REGEXP.find(info)?.destructured?.component1()}")
         BatteryInfo(
             NAME_REGEXP.find(info)?.destructured?.component1() ?: STRING_UNKNOWN,
             INPUT_SUSPEND_REGEXP.find(info)?.destructured?.component1()?.toIntOrNull().let { // If r == true (input is suspended)
@@ -201,7 +205,7 @@ open class AccHandler(override val version: Int) : AccInterface {
             HEALTH_REGEXP.find(info)?.destructured?.component1() ?: STRING_UNKNOWN,
             PRESENT_REGEXP.find(info)?.destructured?.component1()?.toIntOrNull() ?: -1,
             CHARGE_TYPE_REGEXP.find(info)?.destructured?.component1() ?: STRING_UNKNOWN,
-            CAPACTIY_REGEXP.find(info)?.destructured?.component1()?.toIntOrNull() ?: -1,
+            CAPACTIY_REGEXP.find(info)?.destructured?.component1()?.toIntOrNull() ?: 0,
             CHARGER_TEMP_REGEXP.find(info)?.destructured?.component1()?.toIntOrNull()?.let { it/10 } ?: -1,
             CHARGER_TEMP_MAX_REGEXP.find(info)?.destructured?.component1()?.toIntOrNull()?.let { it/10 } ?: -1,
             INPUT_CURRENT_LIMITED_REGEXP.find(info)?.destructured?.component1()?.toIntOrNull().let {

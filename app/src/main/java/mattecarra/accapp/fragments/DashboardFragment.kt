@@ -1,6 +1,7 @@
 package mattecarra.accapp.fragments
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -83,9 +84,21 @@ class DashboardFragment : ScopedFragment()
             dash.daemon?.let { daemon -> setAccdStatusUi(daemon) }
 
             // Battery/Charge details
-            binding.dashBatteryCapacityPBar.progress = dash.batteryInfo.capacity
-            binding.dashBatteryStatusTextView.text = getString(R.string.info_status_extended, dash.batteryInfo.status, dash.batteryInfo.chargeType)
+            val intent = context?.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
+            val level = intent?.getIntExtra(android.os.BatteryManager.EXTRA_LEVEL, -1) ?: -1
+            val scale = intent?.getIntExtra(android.os.BatteryManager.EXTRA_SCALE, -1) ?: -1
+            val systemCapacity = if (level != -1 && scale != -1) (level * 100f / scale).toInt() else dash.batteryInfo.capacity
 
+            binding.dashBatteryCapacityPBar.max = 100
+            binding.dashBatteryCapacityPBar.progress = systemCapacity
+            val cType = dash.batteryInfo.chargeType
+            val statusStr = if (cType.equals("Unknown", ignoreCase = true) || cType.equals("N/A", ignoreCase = true) || cType.isBlank() || cType.equals("null", ignoreCase = true)) {
+                dash.batteryInfo.status
+            } else {
+                getString(R.string.info_status_extended, dash.batteryInfo.status, cType)
+            }
+            binding.dashBatteryStatusTextView.text = statusStr
+            android.util.Log.e("AccA:Dash", "Setting PBar progress to $systemCapacity (acc=${dash.batteryInfo.capacity})")
             binding.dashBatteryChargingSpeedTextView.text = if (dash.batteryInfo.isCharging()) getString(R.string.info_charging_speed) else getString(R.string.info_discharging_speed)
 
             val plus = if (Acc.instance.version < 202107280) dash.batteryInfo.isCharging() else true
